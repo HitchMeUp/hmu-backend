@@ -2,7 +2,7 @@
 
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
-var md5 = require('MD5');
+const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 var userSchema = new mongoose.Schema({
     email: {
@@ -10,15 +10,16 @@ var userSchema = new mongoose.Schema({
         lowercase: true,
         unique: true,
         required: true,
-        match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Invalid E-Mail!'],
-        index: true
+        match: [emailRegex, 'Invalid E-Mail!'],
+        index: true,
+        trim: true
     },
     password: {
         type: String,
         required: true
     },
-    firstname: String,
-    surname: String,
+    firstname: { type: String, trim: true },
+    surname: { type: String, trim: true },
     description: String,
     birthdate: Date,
     image: String,
@@ -58,7 +59,7 @@ userSchema.methods.validPassword = function (password) {
 };
 
 userSchema.pre('save', function (next) {
-    console.log('hello.');
+
 });
 
 module.exports = mongoose.model('User', userSchema);
