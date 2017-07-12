@@ -3,10 +3,6 @@
 var User = require('../user/user.model');
 var passport = require('passport');
 
-function handleError(res, err) {
-    return res.status(500).send(err);
-}
-
 //https://github.com/dzt/MobilePassport/
 exports.register = function (req, res) {
 
@@ -15,17 +11,19 @@ exports.register = function (req, res) {
 
     User.findOne({ email: req.body.email }, function (err, user) {
         if (user) {
+            console.log('Email already in use.');
             return res.status(400).end('User already exists');
         } else {
-
-            var newUser = new User();
-            newUser.firstname = req.body.firstname;
-            newUser.surname = req.body.surname;
+            var newUser = new User(req.body);
             newUser.password = newUser.generateHash(req.body.password);
-            newUser.email = req.body.email;
-            newUser.description = req.body.description;
-
-            newUser.save();
+            try {
+                newUser.save(function (err) {
+                    if (err) return res.status(400).end('User could not be saved...');
+                    // saved
+                });
+            } catch (err) {
+                console.log(err);
+            }
 
             res.writeHead(200, { "Content-Type": "application/json" });
 

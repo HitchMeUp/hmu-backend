@@ -59,7 +59,7 @@ userSchema.methods.validPassword = function (password) {
 };
 
 userSchema.pre('save', function (next) {
-
+    next();
 });
 
 module.exports = mongoose.model('User', userSchema);
