@@ -11,10 +11,12 @@ var app = express();
 
 var port = process.env.PORT || 3000;
 
+var mongodb = process.env.MONGODB_URI || 'mongodb://localhost/hmu-app';
+
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(bodyParser.json());
-//app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(session({ secret: 'verysecretkey' }));
 app.use(passport.initialize());
@@ -25,11 +27,12 @@ require('./config/passport')(passport);
 require('./routes')(app, passport);
 
 //DB Connection
-mongoose.connect('mongodb://localhost/hmu-app');
+mongoose.connect(mongodb);
 
 // Start server
 server.listen(port, function () {
     console.log('Server listening on port ' + port + '...');
+    console.log(mongodb);
 });
 
 // Expose app
