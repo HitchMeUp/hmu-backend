@@ -18,7 +18,12 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(session({ secret: 'verysecretkey' }));
+app.use(session({
+    secret: 'verysecretkey',
+    resave: true,
+    saveUninitialized: false
+}));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -29,6 +34,7 @@ require('./routes')(app, passport);
 //DB Connection
 mongoose.connect(mongodb);
 
+
 // Start server
 server.listen(port, function () {
     console.log('Server listening on port ' + port + '...');
@@ -36,6 +42,10 @@ server.listen(port, function () {
 });
 
 // Expose app
+
+/*console.log('Exporting');
+console.log(db);*/
 module.exports = {
-    app: app,
+    app: app
 };
+

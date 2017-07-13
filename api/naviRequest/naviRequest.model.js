@@ -6,13 +6,14 @@ var naviRequestSchema = new mongoose.Schema({
     status: String,
     from: String,
     to: String,
-    passengers: [{
+    maxDetour: { type: Number, default: 5 },
+    matchings: [{
         hitchRequest: {
             type: mongoose.Schema.ObjectId,
             ref: 'hitchRequest',
             required: false
         },
-        status: String
+        status: { type: String, default: 'open' }
     }],
     availableSeats: Number,
     createdAt: { type: Date, default: Date.now },

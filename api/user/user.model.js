@@ -47,6 +47,11 @@ var userSchema = new mongoose.Schema({
         year: Number,
         brand: String,
         model: String,
+    },
+    currentNaviRequest: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'naviRequest',
+        required: false
     }
 });
 
@@ -57,9 +62,4 @@ userSchema.methods.generateHash = function (password) {
 userSchema.methods.validPassword = function (password) {
     return bcrypt.compareSync(password, this.password);
 };
-
-userSchema.pre('save', function (next) {
-    next();
-});
-
 module.exports = mongoose.model('User', userSchema);

@@ -1,5 +1,8 @@
 'use strict';
 
+var User = require('../user/user.model');
+var hitchRequest = require('../hitchRequest/hitchRequest.model');
+
 var naviRequest = require('./naviRequest.model');
 
 function handleError(res, err) {
@@ -31,11 +34,46 @@ exports.show = function (req, res) {
 };
 
 exports.create = function (req, res) {
-    naviRequest.create(req.body, function (err, newnaviRequest) {
-        if (err) {
-            return handleError(res, err);
-        }
+    User.findOne({ email: req.user.email }).
+        populate('currentNaviRequest').
+        exec(function (err, user) {
+            if (user.currentNaviRequest && user.currentNaviRequest.status == 'open') {
+                user.currentNaviRequest.status = 'closed';
+            }
 
-        return res.json(newnaviRequest);
-    });
+            naviRequest.create(req.body, function (err, newNaviRequest) {
+
+                if (err) {
+                    return handleError(res, err);
+                }
+
+                user.currentNaviRequest = newNaviRequest._id;
+
+                var results = [];
+
+                hitchRequest.find({ status: 'open' }, function (err, hitchRequests) {
+
+                    hitchRequests.forEach(function (oneHitchRequest) {
+
+                        //check if enough seats are available
+                        if (oneHitchRequest.seatsNeeded <= newNaviRequest.availableSeats) {
+
+                            //check if the detour for a hitchrequest is still within range of the max detour
+                            if (calcDetour(newNaviRequest, oneHitchRequest) <= newNaviRequest.maxDetour) {
+                                results.push({ hitchRequest: oneHitchRequest, status: 'open' });
+                            }
+                        }
+                    });
+                    newNaviRequest.matchings = results;
+                    console.log(newNaviRequest.matchings);
+                    return res.json(results);
+                });
+            });
+        });
+
 };
+
+//TODO Google API for calculation
+var calcDetour = function (naviRequest, hitchRequest) {
+    return 1;
+}
