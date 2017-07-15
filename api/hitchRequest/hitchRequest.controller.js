@@ -3,6 +3,7 @@
 var hitchRequest = require('./hitchRequest.model');
 var User = require('../user/user.model');
 
+
 function handleError(res, err) {
     return res.send(500, err);
 }

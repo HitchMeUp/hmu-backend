@@ -13,7 +13,8 @@ module.exports = function (app, passport) {
 
     // Other routes return a 404
     app.get('/', function (req, res) {
-        res.sendStatus(404);
+     //   res.sendStatus(404);
+     res.sendFile(__dirname + '/index.html');
     });
 };
 

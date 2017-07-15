@@ -5,6 +5,7 @@ var passport = require('passport');
 var morgan = require('morgan');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
+var socketController = require('./api/socket/socketController.js');
 
 // Setup server
 var app = express();
@@ -35,11 +36,15 @@ require('./routes')(app, passport);
 mongoose.connect(mongodb);
 
 
+//Start socket
+var io = require('./api/socket/socketController').listen(server);
+
 // Start server
-server.listen(port, function () {
-    console.log('Server listening on port ' + port + '...');
+server.listen(1234, '192.168.178.20', function () {
+    console.log('Server listening on port ' + 1234 + '...');
     console.log(mongodb);
 });
+
 
 // Expose app
 
