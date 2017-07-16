@@ -22,7 +22,7 @@ var userSchema = new mongoose.Schema({
     surname: { type: String, trim: true },
     description: String,
     birthdate: Date,
-    image: String,
+    image: { data: Buffer, contentType: String },
     reviews: [
         {
             user: {
@@ -40,10 +40,15 @@ var userSchema = new mongoose.Schema({
             comment: String
         }
     ],
-    Car: {
+    device: {
+        deviceName: String,
+        deviceId: String,
+        registrationId: String
+    },
+    car: {
         capacity: Number,
         color: String,
-        image: String,
+        image: { data: Buffer, contentType: String },
         year: Number,
         brand: String,
         model: String,
@@ -51,6 +56,11 @@ var userSchema = new mongoose.Schema({
     currentNaviRequest: {
         type: mongoose.Schema.ObjectId,
         ref: 'naviRequest',
+        required: false
+    },
+    currentHitchRequest: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'hitchRequest',
         required: false
     }
 });

@@ -3,10 +3,10 @@
 var mongoose = require('mongoose');
 
 var naviRequestSchema = new mongoose.Schema({
-    status: String,
+    status: { type: String, default: 'open' },
     from: String,
     to: String,
-    maxDetour: { type: Number, default: 5 },
+    maxDetour: { type: Number, default: 45 },
     matchings: [{
         hitchRequest: {
             type: mongoose.Schema.ObjectId,

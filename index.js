@@ -34,7 +34,6 @@ require('./routes')(app, passport);
 //DB Connection
 mongoose.connect(mongodb);
 
-
 // Start server
 server.listen(port, function () {
     console.log('Server listening on port ' + port + '...');
@@ -42,9 +41,6 @@ server.listen(port, function () {
 });
 
 // Expose app
-
-/*console.log('Exporting');
-console.log(db);*/
 module.exports = {
     app: app
 };

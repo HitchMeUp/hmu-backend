@@ -18,15 +18,16 @@
     },
     "homepage": "https://github.com/SErfkamp/hmu-backend#readme",
     "dependencies": {
+        "@google/maps": "^0.4.2",
         "apn": "^2.1.4",
         "bcrypt-nodejs": "0.0.3",
         "body-parser": "^1.17.2",
-        "connect-flash": "^0.1.1",
         "cookie-parser": "^1.4.3",
         "express": "^4.15.3",
         "express-session": "^1.15.3",
         "mongoose": "^4.10.6",
         "morgan": "^1.8.2",
+        "node-gcm": "^0.14.6",
         "passport": "^0.3.2",
         "passport-local": "^1.0.0",
         "validator": "^7.2.0"

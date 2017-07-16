@@ -2,8 +2,11 @@
 
 var User = require('../user/user.model');
 var hitchRequest = require('../hitchRequest/hitchRequest.model');
-
 var naviRequest = require('./naviRequest.model');
+
+var googleClient = require('../../services/googleClient').googleMapsClient;
+var pushService = require('../../services/pushService');
+
 
 function handleError(res, err) {
     return res.send(500, err);
@@ -33,6 +36,14 @@ exports.show = function (req, res) {
     });
 };
 
+exports.acceptHitchRequest = function (req, res) {
+    User.findOne({ email: req.user.email }).
+        populate('currentNaviRequest').
+        exec(function (err, user) {
+
+        });
+};
+
 exports.create = function (req, res) {
     User.findOne({ email: req.user.email }).
         populate('currentNaviRequest').
@@ -53,27 +64,76 @@ exports.create = function (req, res) {
 
                 hitchRequest.find({ status: 'open' }, function (err, hitchRequests) {
 
+                    if (!hitchRequests.length) {
+                        return res.send('No requests found');
+                    }
+
+                    var hitchRequestsProcessed = 0;
+
                     hitchRequests.forEach(function (oneHitchRequest) {
 
                         //check if enough seats are available
-                        if (oneHitchRequest.seatsNeeded <= newNaviRequest.availableSeats) {
+                        /*if (oneHitchRequest.seatsNeeded > newNaviRequest.availableSeats) {
+                            return;
+                        }*/
 
-                            //check if the detour for a hitchrequest is still within range of the max detour
-                            if (calcDetour(newNaviRequest, oneHitchRequest) <= newNaviRequest.maxDetour) {
-                                results.push({ hitchRequest: oneHitchRequest, status: 'open' });
+                        //check if the detour for a hitchrequest is still within range of the max detour
+                        calcDetour(newNaviRequest, oneHitchRequest, function (detour) {
+                            hitchRequestsProcessed++;
+
+                            if (detour > (newNaviRequest.maxDetour * 60)) {
+                                return;
                             }
-                        }
+
+                            results.push({ hitchRequest: oneHitchRequest, status: 'open' });
+
+                            if (hitchRequestsProcessed === hitchRequests.length) {
+                                return res.json(results);
+                            }
+
+                        });
                     });
-                    newNaviRequest.matchings = results;
-                    console.log(newNaviRequest.matchings);
-                    return res.json(results);
                 });
             });
         });
-
 };
 
-//TODO Google API for calculation
-var calcDetour = function (naviRequest, hitchRequest) {
-    return 1;
+var calcDetour = function (naviRequest, hitchRequest, callback) {
+    googleClient.directions({
+        origin: naviRequest.from,
+        destination: naviRequest.to,
+    }, function (err, naviResponse) {
+        if (err) {
+            console.log(err);
+        }
+
+        let legs = naviResponse.json.routes[0].legs;
+        var naviDuration = 0;
+
+        legs.forEach(function (leg) {
+            naviDuration += leg.duration.value;
+        });
+
+        googleClient.directions({
+            origin: naviRequest.from,
+            destination: naviRequest.to,
+            waypoints: [hitchRequest.from, hitchRequest.to]
+        }, function (err, detourResponse) {
+
+            if (err) {
+                console.log(err);
+            }
+
+            let legs = detourResponse.json.routes[0].legs;
+            let detourDuration = 0;
+
+            legs.forEach(function (leg) {
+                detourDuration += leg.duration.value;
+            });
+
+            let detour = detourDuration - naviDuration;
+            callback(detour);
+        });
+    });
+
 }
