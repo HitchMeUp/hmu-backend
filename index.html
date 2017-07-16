@@ -1,0 +1,89 @@
+<html>
+<head>
+    <title>IO Chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<h1>HitchMeUp</h1>
+<p1>Name</p1>
+<br>
+<input type="text" id="name"><br>
+<br>
+<p1>Start</p1>
+<br>
+<input type="text" id="start"><br>
+<br>
+<p1>Destination</p1>
+<br>
+<input type="text" id="destination"><br>
+<br>
+<label for="passenger">Passenger</label>
+<input type="radio" name="role" id="passenger" value="passenger"><br>
+<label for="driver">Driver</label>
+<input type="radio" name="role" id="driver" value="driver"><br>
+<br>
+<button onclick="sendRide()">Submit</button>
+
+
+<script>
+    var socket = io.connect();
+    var user;
+
+    socket.on('wantedOffer', function(potential) {
+        promptOffer(potential);
+    });
+
+    socket.on('id', function(id){
+        user = new User();
+        user.id = id;
+    });
+
+    socket.on('confirmation', function(answer, potential){
+        promptConfirmation(answer, potential);
+    });
+
+    socket.on('match', function(potentials){
+        var i, answer;
+        for(i = 0; i < potentials.length; i++){
+           answer = confirm("Fahrt Gefunden! Möchtest du mit " + potentials[i].name + " mitfahren?");
+                socket.emit("wanted", answer, potentials[i]);
+        }
+        confirm('Zurzeit liegen keine (weiteren) Fahrten vor. Du wirst benachrichtigt, wenn sich das ändert.')
+    });
+
+    function User(id, role, start, destination) {
+        this.id = id;
+        this.role = role;
+        this.start = start;
+        this.destination = destination;
+    }
+
+    function promptConfirmation(answer, potential) {
+        if(answer == true){
+            confirm(potential.name + " hat die Fahrt bestätigt");
+        } else {
+            confirm(potential.name + " hat die Fahrt abgelehnt");
+        }
+    }
+
+
+    function promptOffer(potential) {
+        var answer = confirm(potential.name + " möchte mit dir fahren, wills du die Fahrt annehmen?");
+        socket.emit('responseToOffer', answer, user.id ,potential);
+    }
+
+
+    function sendRide(){
+        user.start = document.getElementById("start").value;
+        user.destination = document.getElementById("destination").value;
+        user.name = document.getElementById("name").value;
+        if(document.getElementById("passenger").checked ){
+            user.role = "passenger";
+        } else {
+            user.role = "driver";
+        }
+        socket.emit('ride', user);
+    }
+</script>
+</body>
+</html>
