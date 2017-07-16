@@ -1,8 +1,8 @@
 'use strict';
 
 var User = require('../user/user.model');
-var hitchRequest = require('../hitchRequest/hitchRequest.model');
-var naviRequest = require('./naviRequest.model');
+var HitchRequest = require('../hitchRequest/hitchRequest.model');
+var NaviRequest = require('./naviRequest.model');
 
 var googleClient = require('../../services/googleClient').googleMapsClient;
 var pushService = require('../../services/pushService');
@@ -13,7 +13,7 @@ function handleError(res, err) {
 }
 
 exports.index = function (req, res) {
-    naviRequest.find(req.query).lean().exec(function (err, naviRequests) {
+    NaviRequest.find(req.query).lean().exec(function (err, naviRequests) {
         if (err) {
             return handleError(res, err);
         }
@@ -23,7 +23,7 @@ exports.index = function (req, res) {
 };
 
 exports.show = function (req, res) {
-    naviRequest.findById(req.params.id).lean().exec(function (err, naviRequest) {
+    NaviRequest.findById(req.params.id).lean().exec(function (err, naviRequest) {
         if (err) {
             return handleError(res, err);
         }
@@ -49,20 +49,22 @@ exports.create = function (req, res) {
         populate('currentNaviRequest').
         exec(function (err, user) {
             if (user.currentNaviRequest && user.currentNaviRequest.status == 'open') {
-                user.currentNaviRequest.status = 'closed';
+                NaviRequest.findByIdAndUpdate(user.currentNaviRequest._id, { $set: { status: 'closed' } }).exec();
             }
 
-            naviRequest.create(req.body, function (err, newNaviRequest) {
+            NaviRequest.create(req.body, function (err, newNaviRequest) {
+
 
                 if (err) {
                     return handleError(res, err);
                 }
 
-                user.currentNaviRequest = newNaviRequest._id;
+                User.findByIdAndUpdate(user._id, { $set: { currentNaviRequest: newNaviRequest._id } }).exec();
+                NaviRequest.findByIdAndUpdate(newNaviRequest._id, { $set: { user: user._id } }).exec();
 
                 var results = [];
 
-                hitchRequest.find({ status: 'open' }, function (err, hitchRequests) {
+                HitchRequest.find({ status: 'open' }, function (err, hitchRequests) {
 
                     if (!hitchRequests.length) {
                         return res.send('No requests found');

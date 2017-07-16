@@ -1,7 +1,7 @@
 'use strict';
 
-var naviRequest = require('../naviRequest/naviRequest.model');
-var hitchRequest = require('./hitchRequest.model');
+var NaviRequest = require('../naviRequest/naviRequest.model');
+var HitchRequest = require('./hitchRequest.model');
 
 var googleClient = require('../../services/googleClient').googleMapsClient;
 
@@ -12,7 +12,7 @@ function handleError(res, err) {
 }
 
 exports.index = function (req, res) {
-    hitchRequest.find(req.query).lean().exec(function (err, hitchRequests) {
+    HitchRequest.find(req.query).lean().exec(function (err, hitchRequests) {
         if (err) {
             return handleError(res, err);
         }
@@ -22,7 +22,7 @@ exports.index = function (req, res) {
 };
 
 exports.show = function (req, res) {
-    hitchRequest.findById(req.params.id).lean().exec(function (err, hitchRequest) {
+    HitchRequest.findById(req.params.id).lean().exec(function (err, hitchRequest) {
         if (err) {
             return handleError(res, err);
         }
@@ -39,20 +39,21 @@ exports.create = function (req, res) {
     User.findOne({ email: req.user.email }).
         exec(function (err, user) {
             if (user.currentHitchRequest && user.currentHitchRequest.status == 'open') {
-                user.currentHitchRequest.status = 'closed';
+                HitchRequest.findByIdAndUpdate(user.currentHitchRequest._id, { $set: { status: 'status' } }).exec();
             }
 
-            hitchRequest.create(req.body, function (err, newHitchRequest) {
+            HitchRequest.create(req.body, function (err, newHitchRequest) {
 
                 if (err) {
                     return handleError(res, err);
                 }
 
-                user.currentHitchRequest = newHitchRequest._id;
+                User.findByIdAndUpdate(user._id, { $set: { currentHitchRequest: newHitchRequest._id } }).exec();
+                HitchRequest.findByIdAndUpdate(newHitchRequest._id, { $set: { user: user._id } }).exec();
 
                 var results = [];
 
-                naviRequest.find({ status: 'open' }, function (err, naviRequests) {
+                NaviRequest.find({ status: 'open' }, function (err, naviRequests) {
 
                     if (!naviRequests.length) {
                         return res.send('No requests found');
@@ -61,7 +62,6 @@ exports.create = function (req, res) {
                     var naviRequestsProcessed = 0;
 
                     naviRequests.forEach(function (oneNaviRequest) {
-                        console.log('test');
 
                         //check if the detour for a hitchrequest is still within range of the max detour
                         calcDetour(oneNaviRequest, newHitchRequest, function (detour) {

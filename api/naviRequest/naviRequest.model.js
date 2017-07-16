@@ -7,6 +7,11 @@ var naviRequestSchema = new mongoose.Schema({
     from: String,
     to: String,
     maxDetour: { type: Number, default: 45 },
+    user: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+        required: false
+    },
     matchings: [{
         hitchRequest: {
             type: mongoose.Schema.ObjectId,
