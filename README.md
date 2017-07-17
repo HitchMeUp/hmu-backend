@@ -12,6 +12,7 @@ npm start
 API:  
   
 Auth:  
+```
 POST /auth/register  
 {  
   email: String,  
@@ -72,3 +73,4 @@ POST /api/naviRequest
   availableSeats: Number - default 1 // functionality not yet implemented  
 }  
 
+```
