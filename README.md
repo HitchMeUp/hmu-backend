@@ -1,15 +1,15 @@
 # hmu-backend
 
-Set-Up:  
+###### Set-Up:  
 Put Google API Key into /services/googleClient.js  
 Start MongoDB.  
   
-To run:  
+###### To run:  
 npm install  
 npm start  
   
   
-API:  
+###### API:  
   
 Auth:  
 ```
