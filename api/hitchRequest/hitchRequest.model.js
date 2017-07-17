@@ -9,20 +9,38 @@ var hitchRequestSchema = new mongoose.Schema({
     comment: String,
     user: {
         type: mongoose.Schema.ObjectId,
-        ref: 'User',
+        ref: 'user',
         required: false
     },
-    matchings: [{
-        naviRequest: {
+    matchings: [
+        {
             type: mongoose.Schema.ObjectId,
-            ref: 'naviRequest',
+            ref: 'hitchRequest',
             required: false
         },
-        status: String
-    }],
+    ],
+    declines: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'hitchRequest',
+            required: false
+        },
+    ],
+    pendings: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'hitchRequest',
+            required: false
+        },
+    ],
+    final: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'hitchRequest',
+        required: false
+    },
     seatsNeeded: { type: Number, default: 1 },
     createdAt: { type: Date, default: Date.now },
     price: Number
 });
 
-module.exports = mongoose.model('HitchRequest', hitchRequestSchema);
+module.exports = mongoose.model('hitchRequest', hitchRequestSchema);

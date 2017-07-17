@@ -9,18 +9,36 @@ var naviRequestSchema = new mongoose.Schema({
     maxDetour: { type: Number, default: 45 },
     user: {
         type: mongoose.Schema.ObjectId,
-        ref: 'User',
+        ref: 'user',
         required: false
     },
-    matchings: [{
-        hitchRequest: {
+    matchings: [
+        {
             type: mongoose.Schema.ObjectId,
             ref: 'hitchRequest',
             required: false
         },
-        status: { type: String, default: 'open' }
-    }],
-    availableSeats: Number,
+    ],
+    declines: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'hitchRequest',
+            required: false
+        },
+    ],
+    pendings: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'hitchRequest',
+            required: false
+        },
+    ],
+    final: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'hitchRequest',
+        required: false
+    },
+    seatsNeeded: { type: Number, default: 1 },
     createdAt: { type: Date, default: Date.now },
 });
 

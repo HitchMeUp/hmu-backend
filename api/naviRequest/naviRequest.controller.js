@@ -36,27 +36,66 @@ exports.show = function (req, res) {
     });
 };
 
+//User -> Current Navi Request -> ID von Hitchrequest -> Status -> Benachrichtigung
+
+// User accepts a Navi Request
+//accept/hitchRequest/:id'
 exports.acceptRequest = function (req, res) {
     User.findOne({ email: req.user.email }).
-        populate('currentNaviRequest').
         exec(function (err, user) {
+            NaviRequest.findByIdAndUpdate(user.currentNaviRequest, { $set: { status: 'pending' } }, (err, naviRequest) => {
+                naviRequest.matchings.forEach(function (match, index) {
+                    naviRequest.pendings.push(match);
+                    naviRequest.matchings = naviRequest.matchings.slice(index, 1);
+                    naviRequest.save(function (err) {
+                        if (err) console.log(err);
+                    });
 
+                    console.log(index);
+
+                    console.log(naviRequest.matchings);
+                    console.log(naviRequest.matchings.slice(index, 1));
+
+                    return res.send(200);
+
+                    //TODO 
+                    //Notify client of new matches
+                });
+            });
         });
 };
 
 exports.declineRequest = function (req, res) {
     User.findOne({ email: req.user.email }).
-        populate('currentNaviRequest').
         exec(function (err, user) {
+            NaviRequest.findByIdAndUpdate(user.currentNaviRequest, { $set: { status: 'pending' } }, (err, naviRequest) => {
+                naviRequest.matchings.forEach(function (match, index) {
+                    naviRequest.declines.push(match);
+                    naviRequest.matchings = naviRequest.matchings.slice(index, 1);
+                    naviRequest.save(function (err) {
+                        if (err) console.log(err);
+                    });
 
+                    console.log(index);
+
+                    console.log(naviRequest.matchings);
+                    console.log(naviRequest.matchings.slice(index, 1));
+
+                    return res.send(200);
+
+                    //TODO 
+                    //Notify of decline
+                });
+            });
         });
-    return;
 };
 
 exports.create = function (req, res) {
     User.findOne({ email: req.user.email }).
         populate('currentNaviRequest').
         exec(function (err, user) {
+            if (err) console.log(err);
+
             if (user.currentNaviRequest && user.currentNaviRequest.status == 'open') {
                 NaviRequest.findByIdAndUpdate(user.currentNaviRequest._id, { $set: { status: 'closed' } }).exec();
             }
@@ -96,7 +135,9 @@ exports.create = function (req, res) {
                                 return;
                             }
 
-                            results.push({ hitchRequest: oneHitchRequest, status: 'open' });
+                            NaviRequest.findByIdAndUpdate(newNaviRequest._id, { $push: { matchings: oneHitchRequest._id } }).exec();
+
+                            results.push(oneHitchRequest);
 
                             if (hitchRequestsProcessed === hitchRequests.length) {
                                 return res.json(results);

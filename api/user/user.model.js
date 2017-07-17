@@ -27,7 +27,7 @@ var userSchema = new mongoose.Schema({
         {
             user: {
                 type: mongoose.Schema.ObjectId,
-                ref: 'User',
+                ref: 'user',
                 required: false
             },
             naviRequest: {
@@ -72,4 +72,4 @@ userSchema.methods.generateHash = function (password) {
 userSchema.methods.validPassword = function (password) {
     return bcrypt.compareSync(password, this.password);
 };
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('user', userSchema);

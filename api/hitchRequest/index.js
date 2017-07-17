@@ -9,7 +9,7 @@ router.get('/', controller.index);
 router.get('/:id', controller.show);
 router.post('/', controller.create);
 
-router.post('/accept/:id', controller.acceptRequest);
-router.post('/decline/:id', controller.declineRequest);
+router.post('/accept/naviRequest/:id', controller.acceptRequest);
+router.post('/decline/naviRequest/:id', controller.declineRequest);
 
 module.exports = router;

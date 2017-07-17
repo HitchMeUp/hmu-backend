@@ -37,25 +37,55 @@ exports.show = function (req, res) {
 
 exports.acceptRequest = function (req, res) {
     User.findOne({ email: req.user.email }).
-        populate('currentNaviRequest').
         exec(function (err, user) {
+            HitchRequest.findByIdAndUpdate(user.currentHitchRequest, { $set: { status: 'pending' } }, (err, hitchRequest) => {
+                hitchRequest.matchings.forEach(function (match, index) {
+                    hitchRequest.pendings.push(match);
+                    hitchRequest.matchings = hitchRequest.matchings.splice(index, 1);
+                    hitchRequest.save(function (err) {
+                        if (err) console.log(err);
+                    });
 
+                    return res.send(200);
+
+
+                    //TODO 
+                    //Notify client of new matches
+                });
+            });
         });
 };
 
 exports.declineRequest = function (req, res) {
     User.findOne({ email: req.user.email }).
-        populate('currentNaviRequest').
         exec(function (err, user) {
+            HitchRequest.findByIdAndUpdate(user.currentHitchRequest, { $set: { status: 'pending' } }, (err, hitchRequest) => {
+                hitchRequest.matchings.forEach(function (match, index) {
+                    hitchRequest.declines.push(match);
 
+                    hitchRequest.matchings = hitchRequest.matchings.splice(index, 1);
+                    hitchRequest.save(function (err) {
+                        if (err) console.log(err);
+                    });
+
+                    return res.send(200);
+
+
+                    //TODO 
+                    //Notify of decline
+                });
+            });
         });
 };
 
 exports.create = function (req, res) {
     User.findOne({ email: req.user.email }).
+        populate('currentHitchRequest').
         exec(function (err, user) {
+            if (err) console.log(err);
+
             if (user.currentHitchRequest && user.currentHitchRequest.status == 'open') {
-                HitchRequest.findByIdAndUpdate(user.currentHitchRequest._id, { $set: { status: 'status' } }).exec();
+                HitchRequest.findByIdAndUpdate(user.currentHitchRequest._id, { $set: { status: 'closed' } }).exec();
             }
 
             HitchRequest.create(req.body, function (err, newHitchRequest) {
@@ -87,7 +117,9 @@ exports.create = function (req, res) {
                                 return;
                             }
 
-                            results.push({ naviRequest: oneNaviRequest, status: 'open' });
+                            HitchRequest.findByIdAndUpdate(newHitchRequest._id, { $push: { matchings: oneNaviRequest._id } }).exec();
+
+                            results.push(oneNaviRequest);
 
                             if (naviRequestsProcessed === naviRequests.length) {
                                 return res.json(results);
