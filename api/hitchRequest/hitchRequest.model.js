@@ -6,6 +6,7 @@ var hitchRequestSchema = new mongoose.Schema({
     status: { type: String, default: 'open' },
     from: String,
     to: String,
+    comment: String,
     user: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',

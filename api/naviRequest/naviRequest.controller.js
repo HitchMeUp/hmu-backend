@@ -36,12 +36,21 @@ exports.show = function (req, res) {
     });
 };
 
-exports.acceptHitchRequest = function (req, res) {
+exports.acceptRequest = function (req, res) {
     User.findOne({ email: req.user.email }).
         populate('currentNaviRequest').
         exec(function (err, user) {
 
         });
+};
+
+exports.declineRequest = function (req, res) {
+    User.findOne({ email: req.user.email }).
+        populate('currentNaviRequest').
+        exec(function (err, user) {
+
+        });
+    return;
 };
 
 exports.create = function (req, res) {
