@@ -68,7 +68,7 @@ exports.create = function (req, res) {
                 NaviRequest.find({ status: 'open' }, function (err, naviRequests) {
 
                     if (!naviRequests.length) {
-                        return res.send('No requests found');
+                        return res.status(200).send([]);
                     }
 
                     var naviRequestsProcessed = 0;

@@ -76,7 +76,7 @@ exports.create = function (req, res) {
                 HitchRequest.find({ status: 'open' }, function (err, hitchRequests) {
 
                     if (!hitchRequests.length) {
-                        return res.send('No requests found');
+                        return res.status(200).send([]);
                     }
 
                     var hitchRequestsProcessed = 0;
