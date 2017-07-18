@@ -5,6 +5,9 @@ var HitchRequest = require('../hitchRequest/hitchRequest.model');
 var Matching = require('./matching.model');
 var User = require('../user/user.model');
 
+var pushService = require('../../services/pushService');
+
+
 function handleError(res, err) {
     return res.send(500, err);
 }
@@ -28,9 +31,6 @@ exports.driverAcceptHitchRequest = function (req, res) {
                     { $set: { statusDriver: 'accepted' } }, function (err, match) {
                         if (err) console.log(err);
 
-                        console.log('statusDriver should be accepted..');
-                        console.log(match);
-
                         if (match.statusPassenger == 'accepted') {
 
                             Matching.update({ driver: match.driver._id }, { $set: { status: 'closed' } }, { multi: true }, function (err, driverRes) {
@@ -42,7 +42,18 @@ exports.driverAcceptHitchRequest = function (req, res) {
                             HitchRequest.findByIdAndUpdate(match.hitchRequest, { $set: { status: 'matched' } }).exec();
                             NaviRequest.findByIdAndUpdate(match.naviRequest, { $set: { status: 'matched' } }).exec();
 
-                            //TODO notify passenger
+                            User.findById(match.passenger, function (err, passenger) {
+                                pushService.send(passenger.token, {
+                                    notification: {
+                                        title: 'Match found!',
+                                        body: 'Hey there, it seems we have found a match for your ride!'
+                                    },
+                                    data: {
+                                        user: match.passenger + ""
+                                    }
+                                });
+                            });
+
                         }
 
                         return res.sendStatus(200);
@@ -59,11 +70,21 @@ exports.driverDeclineHitchRequest = function (req, res) {
 
             HitchRequest.findById(req.params.id, function (err, hitchRequest) {
                 Matching.findOneAndUpdate({ driver: user._id, hitchRequest: hitchRequest._id },
-                    { $set: { statusDriver: 'declined' } }, function (err, match) {
+                    { $set: { statusDriver: 'declined', status: 'closed' } }, function (err, match) {
                         if (err) console.log(err);
 
                         if (match.statusPassenger == 'accepted') {
-                            //TODO notify passenger
+                            User.findById(match.passenger, function (err, passenger) {
+                                pushService.send(passenger.token, {
+                                    notification: {
+                                        title: 'Request declined!',
+                                        body: 'Hey there, it seems one of your accepted requests has been declined.'
+                                    },
+                                    data: {
+                                        hitchRequest: match.hitchRequest + ""
+                                    }
+                                });
+                            });
                         }
 
                         return res.sendStatus(200);
@@ -95,7 +116,18 @@ exports.passengerAcceptNaviRequest = function (req, res) {
                             HitchRequest.findByIdAndUpdate(match.hitchRequest, { $set: { status: 'matched' } }).exec();
                             NaviRequest.findByIdAndUpdate(match.naviRequest, { $set: { status: 'matched' } }).exec();
 
-                            //TODO notify driver
+                            User.findById(match.driver, function (err, driver) {
+                                pushService.send(driver.token, {
+                                    notification: {
+                                        title: 'Match found!',
+                                        body: 'Hey there, it seems we have found a match for your ride!'
+                                    },
+                                    data: {
+                                        uset: match.passenger + ""
+                                    }
+                                });
+                            });
+
                         }
 
                         return res.sendStatus(200);
@@ -113,11 +145,21 @@ exports.passengerDeclineNaviRequest = function (req, res) {
 
             NaviRequest.findById(req.params.id, function (err, naviRequest) {
                 Matching.findOneAndUpdate({ driver: user._id, naviRequest: naviRequest._id },
-                    { $set: { statusPassenger: 'declined' } }, function (err, match) {
+                    { $set: { statusPassenger: 'declined', status: 'closed' } }, function (err, match) {
                         if (err) console.log(err);
 
                         if (match.statusDriver == 'accepted') {
-                            //TODO notify driver
+                            User.findById(match.driver, function (err, driver) {
+                                pushService.send(driver.token, {
+                                    notification: {
+                                        title: 'Request declined!',
+                                        body: 'Hey there, it seems one of your accepted requests has been declined.'
+                                    },
+                                    data: {
+                                        naviRequest: match.naviRequest + ""
+                                    }
+                                });
+                            });
                         }
 
                         return res.sendStatus(200);

@@ -35,8 +35,6 @@ exports.register = function (req, res) {
 };
 
 exports.login = function (req, res, next) {
-    console.log('LOGIN');
-    console.log(req.body);
 
     passport.authenticate('local', function (err, user, info) {
 
@@ -47,8 +45,10 @@ exports.login = function (req, res, next) {
         req.logIn(user, function (err) {
             if (err)
                 return next(err);
-            if (!err)
+            if (!err) {
+                if (req.body.token) User.findByIdAndUpdate(user._id, { $set: { token: req.body.token } }).exec();
                 return res.json({ SERVER_RESPONSE: 1, SERVER_MESSAGE: "Logged in!" });
+            }
         });
     })(req, res, next);
 };

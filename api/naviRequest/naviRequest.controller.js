@@ -7,7 +7,6 @@ var Matching = require('../matching/matching.model');
 
 
 var googleClient = require('../../services/googleClient').googleMapsClient;
-var pushService = require('../../services/pushService');
 
 
 function handleError(res, err) {

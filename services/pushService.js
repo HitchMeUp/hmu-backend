@@ -1,20 +1,31 @@
-var gcm = require('node-gcm');
 
-var sender = new gcm.Sender(process.env.GCM_KEY);
+var admin = require("firebase-admin");
 
-exports.sendMessage = function (message, registrationId, callback) {
+//var serviceAccount = require("../config/serviceAccountKey.json");
 
-    var message = new gcm.Message({ data: { message: message } });
-    var regTokens = [registrationId];
-    sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+/*admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://hitchmeup-173823.firebaseio.com"
+});*/
 
-        if (err) {
-            console.error(err);
-            callback();
-        } else {
-            console.log(response);
-            callback();
-        }
-    });
+admin.initializeApp({
+    credential: admin.credential.cert({
+        private_key: process.env.FIREBASE_PRIVATE_KEY,
+        client_email: process.env.FIREBASE_CLIENT_EMAIL
+    }),
+    databaseURL: "https://hitchmeup-173823.firebaseio.com"
+});
 
-}
+exports.send = function (registrationToken, payload) {
+    admin.messaging().sendToDevice(registrationToken, payload)
+        .then(function (response) {
+
+            console.log('Payload');
+            console.log(payload);
+
+            console.log("Successfully sent message:", response);
+        })
+        .catch(function (error) {
+            console.log("Error sending message:", error);
+        });
+};
