@@ -3,6 +3,8 @@
 var User = require('../user/user.model');
 var HitchRequest = require('../hitchRequest/hitchRequest.model');
 var NaviRequest = require('./naviRequest.model');
+var Matching = require('../matching/matching.model');
+
 
 var googleClient = require('../../services/googleClient').googleMapsClient;
 var pushService = require('../../services/pushService');
@@ -12,7 +14,12 @@ function handleError(res, err) {
     return res.send(500, err);
 }
 
+
 exports.index = function (req, res) {
+
+    console.log(req.user);
+
+    //console.log(req);
     NaviRequest.find(req.query).lean().exec(function (err, naviRequests) {
         if (err) {
             return handleError(res, err);
@@ -23,6 +30,7 @@ exports.index = function (req, res) {
 };
 
 exports.show = function (req, res) {
+
     NaviRequest.findById(req.params.id).lean().exec(function (err, naviRequest) {
         if (err) {
             return handleError(res, err);
@@ -36,60 +44,6 @@ exports.show = function (req, res) {
     });
 };
 
-//User -> Current Navi Request -> ID von Hitchrequest -> Status -> Benachrichtigung
-
-// User accepts a Navi Request
-//accept/hitchRequest/:id'
-exports.acceptRequest = function (req, res) {
-    User.findOne({ email: req.user.email }).
-        exec(function (err, user) {
-            NaviRequest.findByIdAndUpdate(user.currentNaviRequest, { $set: { status: 'pending' } }, (err, naviRequest) => {
-                naviRequest.matchings.forEach(function (match, index) {
-                    naviRequest.pendings.push(match);
-                    naviRequest.matchings = naviRequest.matchings.slice(index, 1);
-                    naviRequest.save(function (err) {
-                        if (err) console.log(err);
-                    });
-
-                    console.log(index);
-
-                    console.log(naviRequest.matchings);
-                    console.log(naviRequest.matchings.slice(index, 1));
-
-                    return res.send(200);
-
-                    //TODO 
-                    //Notify client of new matches
-                });
-            });
-        });
-};
-
-exports.declineRequest = function (req, res) {
-    User.findOne({ email: req.user.email }).
-        exec(function (err, user) {
-            NaviRequest.findByIdAndUpdate(user.currentNaviRequest, { $set: { status: 'pending' } }, (err, naviRequest) => {
-                naviRequest.matchings.forEach(function (match, index) {
-                    naviRequest.declines.push(match);
-                    naviRequest.matchings = naviRequest.matchings.slice(index, 1);
-                    naviRequest.save(function (err) {
-                        if (err) console.log(err);
-                    });
-
-                    console.log(index);
-
-                    console.log(naviRequest.matchings);
-                    console.log(naviRequest.matchings.slice(index, 1));
-
-                    return res.send(200);
-
-                    //TODO 
-                    //Notify of decline
-                });
-            });
-        });
-};
-
 exports.create = function (req, res) {
     User.findOne({ email: req.user.email }).
         populate('currentNaviRequest').
@@ -98,9 +52,17 @@ exports.create = function (req, res) {
 
             if (user.currentNaviRequest && user.currentNaviRequest.status == 'open') {
                 NaviRequest.findByIdAndUpdate(user.currentNaviRequest._id, { $set: { status: 'closed' } }).exec();
+                Matching.find({ naviRequest: user.currentNaviRequest._id }, function (err, matches) {
+                    matches.forEach(function (match) {
+                        Matching.findByIdAndUpdate(match._id, { $set: { status: 'closed' } }).exec();
+                    });
+                });
             }
 
-            NaviRequest.create(req.body, function (err, newNaviRequest) {
+            var naviReqObj = req.body;
+            naviReqObj.user = user._id;
+
+            NaviRequest.create(naviReqObj, function (err, newNaviRequest) {
 
 
                 if (err) {
@@ -122,11 +84,6 @@ exports.create = function (req, res) {
 
                     hitchRequests.forEach(function (oneHitchRequest) {
 
-                        //check if enough seats are available
-                        /*if (oneHitchRequest.seatsNeeded > newNaviRequest.availableSeats) {
-                            return;
-                        }*/
-
                         //check if the detour for a hitchrequest is still within range of the max detour
                         calcDetour(newNaviRequest, oneHitchRequest, function (detour) {
                             hitchRequestsProcessed++;
@@ -135,13 +92,25 @@ exports.create = function (req, res) {
                                 return;
                             }
 
-                            NaviRequest.findByIdAndUpdate(newNaviRequest._id, { $push: { matchings: oneHitchRequest._id } }).exec();
+                            var matchingObj = {
+                                hitchRequest: oneHitchRequest,
+                                naviRequest: newNaviRequest,
+                                passenger: oneHitchRequest.user,
+                                driver: newNaviRequest.user
+                            };
 
-                            results.push(oneHitchRequest);
+                            Matching.create(matchingObj, function (err, newMatch) {
 
-                            if (hitchRequestsProcessed === hitchRequests.length) {
-                                return res.json(results);
-                            }
+                                if (err) console.log(err);
+
+                                NaviRequest.findByIdAndUpdate(newNaviRequest._id, { $push: { matchings: newMatch } }).exec();
+
+                                results.push(oneHitchRequest);
+
+                                if (hitchRequestsProcessed === hitchRequests.length) {
+                                    return res.json(results);
+                                }
+                            });
 
                         });
                     });

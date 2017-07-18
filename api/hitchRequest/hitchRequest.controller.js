@@ -2,6 +2,7 @@
 
 var NaviRequest = require('../naviRequest/naviRequest.model');
 var HitchRequest = require('./hitchRequest.model');
+var Matching = require('../matching/matching.model');
 
 var googleClient = require('../../services/googleClient').googleMapsClient;
 
@@ -35,49 +36,6 @@ exports.show = function (req, res) {
     });
 };
 
-exports.acceptRequest = function (req, res) {
-    User.findOne({ email: req.user.email }).
-        exec(function (err, user) {
-            HitchRequest.findByIdAndUpdate(user.currentHitchRequest, { $set: { status: 'pending' } }, (err, hitchRequest) => {
-                hitchRequest.matchings.forEach(function (match, index) {
-                    hitchRequest.pendings.push(match);
-                    hitchRequest.matchings = hitchRequest.matchings.splice(index, 1);
-                    hitchRequest.save(function (err) {
-                        if (err) console.log(err);
-                    });
-
-                    return res.send(200);
-
-
-                    //TODO 
-                    //Notify client of new matches
-                });
-            });
-        });
-};
-
-exports.declineRequest = function (req, res) {
-    User.findOne({ email: req.user.email }).
-        exec(function (err, user) {
-            HitchRequest.findByIdAndUpdate(user.currentHitchRequest, { $set: { status: 'pending' } }, (err, hitchRequest) => {
-                hitchRequest.matchings.forEach(function (match, index) {
-                    hitchRequest.declines.push(match);
-
-                    hitchRequest.matchings = hitchRequest.matchings.splice(index, 1);
-                    hitchRequest.save(function (err) {
-                        if (err) console.log(err);
-                    });
-
-                    return res.send(200);
-
-
-                    //TODO 
-                    //Notify of decline
-                });
-            });
-        });
-};
-
 exports.create = function (req, res) {
     User.findOne({ email: req.user.email }).
         populate('currentHitchRequest').
@@ -86,9 +44,17 @@ exports.create = function (req, res) {
 
             if (user.currentHitchRequest && user.currentHitchRequest.status == 'open') {
                 HitchRequest.findByIdAndUpdate(user.currentHitchRequest._id, { $set: { status: 'closed' } }).exec();
+                Matching.find({ hitchRequest: user.currentHitchRequest._id }, function (err, matches) {
+                    matches.forEach(function (match) {
+                        Matching.findByIdAndUpdate(match._id, { $set: { status: 'closed' } }).exec();
+                    });
+                });
             }
 
-            HitchRequest.create(req.body, function (err, newHitchRequest) {
+            var hitchReqObj = req.body;
+            hitchReqObj.user = user._id;
+
+            HitchRequest.create(hitchReqObj, function (err, newHitchRequest) {
 
                 if (err) {
                     return handleError(res, err);
@@ -117,13 +83,25 @@ exports.create = function (req, res) {
                                 return;
                             }
 
-                            HitchRequest.findByIdAndUpdate(newHitchRequest._id, { $push: { matchings: oneNaviRequest._id } }).exec();
+                            var matchingObj = {
+                                hitchRequest: newHitchRequest,
+                                naviRequest: oneNaviRequest,
+                                passenger: newHitchRequest.user,
+                                driver: oneNaviRequest.user
+                            };
 
-                            results.push(oneNaviRequest);
+                            Matching.create(matchingObj, function (err, newMatch) {
 
-                            if (naviRequestsProcessed === naviRequests.length) {
-                                return res.json(results);
-                            }
+                                if (err) console.log(err);
+
+                                HitchRequest.findByIdAndUpdate(newHitchRequest._id, { $push: { matchings: newMatch } }).exec();
+
+                                results.push(oneNaviRequest);
+
+                                if (naviRequestsProcessed === naviRequests.length) {
+                                    return res.json(results);
+                                }
+                            });
                         });
                     });
                 });

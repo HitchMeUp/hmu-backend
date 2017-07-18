@@ -10,6 +10,8 @@ module.exports = function (app, passport) {
 
     app.use('/api/hitchRequest', isLoggedIn, require('./api/hitchRequest'));
     app.use('/api/naviRequest', isLoggedIn, require('./api/naviRequest'));
+    app.use('/api/matching', isLoggedIn, require('./api/matching'));
+
 
     // Other routes return a 404
     app.get('/', function (req, res) {

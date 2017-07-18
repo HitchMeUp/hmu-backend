@@ -9,7 +9,4 @@ router.get('/', controller.index);
 router.get('/:id', controller.show);
 router.post('/', controller.create);
 
-router.post('/accept/hitchRequest/:id', controller.acceptRequest);
-router.post('/decline/hitchRequest/:id', controller.declineRequest);
-
 module.exports = router;
