@@ -1,16 +1,18 @@
 
 var admin = require("firebase-admin");
 
-//var serviceAccount = require("../config/serviceAccountKey.json");
+/*var serviceAccount = require("../config/serviceAccountKey.json");
 
-/*admin.initializeApp({
+admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://hitchmeup-173823.firebaseio.com"
 });*/
 
+var private_key = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+
 admin.initializeApp({
     credential: admin.credential.cert({
-        private_key: process.env.FIREBASE_PRIVATE_KEY,
+        private_key: private_key,
         client_email: process.env.FIREBASE_CLIENT_EMAIL
     }),
     databaseURL: "https://hitchmeup-173823.firebaseio.com"
