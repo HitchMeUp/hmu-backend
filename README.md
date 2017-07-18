@@ -50,8 +50,8 @@ GET /api/user/profile
   
 GET /api/hitchRequest/:id  
 GET /api/hitchRequest  
-POST /api/hitchRequest/accept/:id  
-POST /api/hitchRequest/decline/:id  
+POST /api/hitchRequest/accept/naviRequest/:id  (ID of naviRequest)
+POST /api/hitchRequest/decline/naviRequest/:id  (ID of naviRequest)
 POST /api/hitchRequest  
 {  
   from: String,  
@@ -63,8 +63,8 @@ POST /api/hitchRequest
   
 GET /api/naviRequest/:id  
 GET /api/naviRequest  
-POST /api/naviRequest/accept/:id  
-POST /api/naviRequest/decline/:id  
+POST /api/naviRequest/accept/hitchRequest/:id  (ID of hitchRequest)
+POST /api/naviRequest/decline/hitchRequest/:id  (ID of hitchRequest)
 POST /api/naviRequest  
 {  
   from: String,  
